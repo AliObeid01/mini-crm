@@ -28,10 +28,9 @@ class DepartmentController extends Controller
             ]);
         }
 
-        $perPage = $request->input('per_page');
-        $search = $request->input('search');
+        $search = $request->input('name');
 
-        $departments = $this->departmentService->getDepartmentsBySearch($perPage, $search);
+        $departments = $this->departmentService->getDepartmentsBySearch( $search);
 
         return response()->json([
                 'success' => true,

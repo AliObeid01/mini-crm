@@ -21,13 +21,13 @@ class DepartmentService
         });
     }
 
-    public function getDepartmentsBySearch(int $perPage = 5, ?string $search = null): LengthAwarePaginator
+    public function getDepartmentsBySearch(?string $search = null): LengthAwarePaginator
     {
         return Department::query()
             ->withCount('contacts')
             ->when($search, fn ($q) => $q->where('name', 'LIKE', "%{$search}%"))
             ->orderBy('name', 'asc')
-            ->paginate($perPage);
+            ->paginate(10);
     }
 
     public function createDepartment(array $data): Department
