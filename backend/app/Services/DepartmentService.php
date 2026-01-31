@@ -56,11 +56,6 @@ class DepartmentService
         return $result;
     }
 
-    public function getDepartmentById(int $id): ?Department
-    {
-        return Department::withCount('contacts')->find($id);
-    }
-
     public function clearDepartmentCache(): void
     {
         Cache::forget('all_departments');
