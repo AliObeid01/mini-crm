@@ -13,7 +13,7 @@ class ContactService
 
         $perPage = config('per_page', 5);
         return Cache::remember('all_contacts', 300, function () use ($perPage) {
-            Contact::query()
+            return Contact::query()
                 ->with('departments:id,name')
                 ->orderBy('first_name', 'asc')
                 ->paginate($perPage);
@@ -25,7 +25,14 @@ class ContactService
     ): LengthAwarePaginator {
 
         $perPage = config('per_page', 5);
-        return Cache::remember('searched_contacts', 300, function () use ($filters, $perPage) {
+        $page = request()->get('page', 1);
+
+        $cacheKey = 'searched_contacts:' . md5(json_encode([
+            'filters' => $filters,
+            'page'    => $page,
+            'perPage' => $perPage,
+        ]));
+        return Cache::remember($cacheKey, 300, function () use ($filters, $perPage) {
             return $this->applySearch($filters, $perPage);
         });
     }
@@ -80,6 +87,7 @@ class ContactService
 
     public function deleteContact(Contact $contact): bool
     {
+        $contact->departments()->detach();
         $result = $contact->delete();
         $this->clearContactCache();
         
