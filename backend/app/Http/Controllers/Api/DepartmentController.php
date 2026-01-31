@@ -46,7 +46,7 @@ class DepartmentController extends Controller
             'success' => true,
             'message' => 'Department created successfully',
             'data' => $department,
-        ], 201);
+        ]);
     }
 
     public function show(Department $department): JsonResponse
