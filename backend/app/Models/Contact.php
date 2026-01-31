@@ -35,12 +35,12 @@ class Contact extends Model
 
     public function scopeSearch(Builder $query, array $filters): Builder
     {
-        $name = trim($filters['name']) ?? '';
-        $phone = trim($filters['phone']) ?? '';
-        $departmentId = $filters['department_id'] ?? null;
+        $name = !empty($filters['name']) ? trim($filters['name']) : null;
+        $phone = !empty($filters['phone']) ? trim($filters['phone']) : null;
+        $departmentId = $filters['department_id']?? null;
         return $query
             ->when(
-                !empty($name),
+                $name,
                 fn ($q) => 
                 $q->where(function ($qq) use ($name) {
                     $qq->where('first_name', 'LIKE', "%{$name}%")
@@ -48,11 +48,11 @@ class Contact extends Model
                 })
             )
             ->when(
-                !empty($phone),
+                $phone,
                 fn ($q) => $q->where('phone_number', 'LIKE', "%{$phone}%")
             )
             ->when(
-                !empty($departmentId),
+                $departmentId,
                 fn ($q) => $q->whereHas('departments', function ($qq) use ($departmentId) {
                     $qq->where('departments.id', $departmentId);
                 })
