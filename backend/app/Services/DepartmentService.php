@@ -27,7 +27,7 @@ class DepartmentService
         $perPage = config('per_page', 5);
 
         return Cache::remember('searched_departments', 300, function () use ($search, $perPage) {
-            Department::query()
+            return Department::query()
                 ->withCount('contacts')
                 ->when($search, fn ($q) => $q->where('name', 'LIKE', "%{$search}%"))
                 ->orderBy('name', 'asc')
