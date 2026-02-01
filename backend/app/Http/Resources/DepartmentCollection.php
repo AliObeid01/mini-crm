@@ -23,7 +23,7 @@ class DepartmentCollection extends ResourceCollection
                     'to' => $this->resource->lastItem(),
                     'total' => $this->resource->total(),
                     'has_more_pages' => $this->resource->hasMorePages(),
-                    'pagination_type' => config('pagination_type', 'pagination'),
+                    'pagination_type' => config('app.pagination_type', 'pagination'),
                 ];
             }),
             'links' => $this->when($this->resource instanceof \Illuminate\Pagination\LengthAwarePaginator, function () {
