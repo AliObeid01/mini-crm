@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ContactResource;
 use App\Http\Requests\SearchContactRequest;
 use App\Http\Requests\StoreContactRequest;
 use App\Http\Requests\UpdateContactRequest;
@@ -25,7 +26,7 @@ class ContactController extends Controller
             $contacts = $this->contactService->getContacts();
             return response()->json([
                 'success' => true,
-                'data' => $contacts,
+                'data' => ContactResource::collection($contacts),
             ]);
         }
 
@@ -46,17 +47,17 @@ class ContactController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Contact created successfully',
-            'data' => $contact,
+            'data' => new ContactResource($contact->load('departments')),
         ]);
     }
 
     public function show(Contact $contact): JsonResponse
     {
-        $contact->load('departments:id,name');
+        $contact->load('departments');
 
         return response()->json([
             'success' => true,
-            'data' => $contact,
+            'data' => new ContactResource($contact),
         ]);
     }
 
@@ -67,7 +68,7 @@ class ContactController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Contact updated successfully',
-            'data' => $contact,
+            'data' => new ContactResource($contact->load('departments')),
         ]);
     }
 

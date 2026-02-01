@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreDepartmentRequest;
 use App\Http\Requests\UpdateDepartmentRequest;
+use App\Http\Resources\DepartmentResource;
 use App\Models\Department;
 use App\Services\DepartmentService;
 use Illuminate\Http\JsonResponse;
@@ -24,7 +25,7 @@ class DepartmentController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $departments,
+                'data' => DepartmentResource::collection($departments),
             ]);
         }
 
@@ -45,17 +46,17 @@ class DepartmentController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Department created successfully',
-            'data' => $department,
+            'data' => new DepartmentResource($department),
         ]);
     }
 
     public function show(Department $department): JsonResponse
     {
-        $department->loadCount('contacts');
+        $department->load('contacts');
 
         return response()->json([
             'success' => true,
-            'data' => $department,
+            'data' => new DepartmentResource($department),
         ]);
     }
 
@@ -66,7 +67,7 @@ class DepartmentController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Department updated successfully',
-            'data' => $department,
+            'data' => new DepartmentResource($department->load('contacts')),
         ]);
     }
 
