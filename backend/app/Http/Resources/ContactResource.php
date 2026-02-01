@@ -21,6 +21,7 @@ class ContactResource extends JsonResource
             'phone_number' => $this->phone_number,
             'birthdate' => $this->birthdate?->format('Y-m-d'),
             'city' => $this->city,
+            'departments_count' => $this->whenLoaded('departments', fn () => $this->departments->count()),
             'departments' => $this->whenLoaded('departments', function () {
                     return $this->departments->map(fn ($d) => [
                         'id' => $d->id,

@@ -12,9 +12,14 @@ class ContactService
     public function getContacts(): LengthAwarePaginator {
 
         $perPage = config('per_page', 5);
-        return Cache::remember('all_contacts', 300, function () use ($perPage) {
+        $page = request()->get('page', 1);
+        $cacheKey = 'all_contacts:' . md5(json_encode([
+            'page'    => $page,
+            'perPage' => $perPage,
+        ]));
+        return Cache::remember($cacheKey, 300, function () use ($perPage) {
             return Contact::query()
-                ->with('departments:id,name')
+                ->with('departments')
                 ->orderBy('first_name', 'asc')
                 ->paginate($perPage);
             });
@@ -43,7 +48,7 @@ class ContactService
     private function applySearch(array $filters, int $perPage): LengthAwarePaginator
     {
         return Contact::query()
-            ->with('departments:id,name')
+            ->with('departments')
             ->search($filters)
             ->orderBy('first_name', 'asc')
             ->paginate($perPage);
@@ -63,7 +68,7 @@ class ContactService
 
             $this->clearContactCache();
 
-            return $contact->load('departments:id,name');
+            return $contact->load('departments');
         });
     }
 
@@ -81,7 +86,7 @@ class ContactService
 
             $this->clearContactCache();
 
-            return $contact->fresh(['departments:id,name']);
+            return $contact->fresh('departments');
         });
     }
 
@@ -92,11 +97,6 @@ class ContactService
         $this->clearContactCache();
         
         return $result;
-    }
-
-    public function getContactById(int $id): ?Contact
-    {
-        return Contact::with('departments:id,name')->find($id);
     }
 
     public function importFromCsv(array $csvData, array $defaultDepartmentIds = []): int

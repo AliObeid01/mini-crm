@@ -26,7 +26,7 @@ class ContactController extends Controller
             $contacts = $this->contactService->getContacts();
             return response()->json([
                 'success' => true,
-                'data' => ContactResource::collection($contacts),
+                'data' => $contacts,
             ]);
         }
 
@@ -47,7 +47,7 @@ class ContactController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Contact created successfully',
-            'data' => new ContactResource($contact->load('departments')),
+            'data' => new ContactResource($contact),
         ]);
     }
 
@@ -68,7 +68,7 @@ class ContactController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Contact updated successfully',
-            'data' => new ContactResource($contact->load('departments')),
+            'data' => new ContactResource($contact),
         ]);
     }
 

@@ -25,7 +25,7 @@ class DepartmentController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => DepartmentResource::collection($departments),
+                'data' => $departments,
             ]);
         }
 
@@ -67,7 +67,7 @@ class DepartmentController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Department updated successfully',
-            'data' => new DepartmentResource($department->load('contacts')),
+            'data' => new DepartmentResource($department),
         ]);
     }
 

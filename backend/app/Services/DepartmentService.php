@@ -11,11 +11,11 @@ use Illuminate\Support\Facades\DB;
 class DepartmentService
 {
 
-    public function getAllDepartments(): Collection
+    public function getAllDepartments()
     {
         return Cache::remember('all_departments', 300, function () {
             $query = Department::query()
-                ->with('contacts')
+                ->select('id', 'name')
                 ->orderBy('name', 'asc')
                 ->get();
 
@@ -26,8 +26,14 @@ class DepartmentService
     public function getDepartmentsBySearch(?string $search = null): LengthAwarePaginator
     {
         $perPage = config('per_page', 5);
+        $page = request()->get('page', 1);
 
-        return Cache::remember('searched_departments', 300, function () use ($search, $perPage) {
+        $cacheKey = 'searched_departments:' . md5(json_encode([
+            'search' => $search,
+            'page'    => $page,
+            'perPage' => $perPage,
+        ]));
+        return Cache::remember($cacheKey, 300, function () use ($search, $perPage) {
             return Department::query()
                 ->with('contacts')
                 ->when($search, fn ($q) => $q->where('name', 'LIKE', "%{$search}%"))
@@ -52,7 +58,7 @@ class DepartmentService
             $department->update($data);
             $this->clearDepartmentCache();
             
-            return $department->fresh();
+            return $department->fresh('contacts');
         });
     }
 
