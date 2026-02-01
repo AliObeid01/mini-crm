@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ContactResource;
+use App\Http\Resources\ContactCollection;
 use App\Http\Requests\SearchContactRequest;
 use App\Http\Requests\StoreContactRequest;
 use App\Http\Requests\UpdateContactRequest;
@@ -19,25 +20,19 @@ class ContactController extends Controller
     ) {}
 
 
-    public function index(SearchContactRequest $request): JsonResponse
+    public function index(SearchContactRequest $request): ContactCollection
     {
         if ($request->boolean('all')) {
 
             $contacts = $this->contactService->getContacts();
-            return response()->json([
-                'success' => true,
-                'data' => $contacts,
-            ]);
+            return new ContactCollection($contacts);
         }
 
         $filters = $request->only(['name', 'phone', 'department_id']);
 
         $contacts = $this->contactService->searchContacts($filters);
 
-        return response()->json([
-                'success' => true,
-                'data' => $contacts,
-        ]);
+        return new ContactCollection($contacts);
     }
 
     public function store(StoreContactRequest $request): JsonResponse

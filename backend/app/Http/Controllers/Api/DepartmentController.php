@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreDepartmentRequest;
 use App\Http\Requests\UpdateDepartmentRequest;
 use App\Http\Resources\DepartmentResource;
+use App\Http\Resources\DepartmentCollection;
 use App\Models\Department;
 use App\Services\DepartmentService;
 use Illuminate\Http\JsonResponse;
@@ -18,7 +19,7 @@ class DepartmentController extends Controller
     ) {}
 
 
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): DepartmentCollection|JsonResponse
     {
         if ($request->boolean('all')) {
             $departments = $this->departmentService->getAllDepartments();
@@ -33,10 +34,8 @@ class DepartmentController extends Controller
 
         $departments = $this->departmentService->getDepartmentsBySearch( $search);
 
-        return response()->json([
-                'success' => true,
-                'data' => $departments,
-        ]);
+        return new DepartmentCollection($departments);
+       
     }
 
     public function store(StoreDepartmentRequest $request): JsonResponse
