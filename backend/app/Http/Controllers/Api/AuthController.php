@@ -36,6 +36,8 @@ class AuthController extends Controller
                 'user' => $user,
                 'token' => $token->plainTextToken,
                 'token_type' => 'Bearer',
+                'pagination_type' => config('app.pagination_type'),
+                'per_page' => config('app.per_page'),
             ],
         ]);
     }
