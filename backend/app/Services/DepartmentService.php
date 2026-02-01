@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Department;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -25,7 +24,7 @@ class DepartmentService
 
     public function getDepartmentsBySearch(?string $search = null): LengthAwarePaginator
     {
-        $perPage = config('per_page', 5);
+        $perPage = config('app.per_page', 5);
         $page = request()->get('page', 1);
 
         $cacheKey = 'searched_departments:' . md5(json_encode([

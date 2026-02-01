@@ -11,7 +11,7 @@ class ContactService
 {
     public function getContacts(): LengthAwarePaginator {
 
-        $perPage = config('per_page', 5);
+        $perPage = config('app.per_page', 5);
         $page = request()->get('page', 1);
         $cacheKey = 'all_contacts:' . md5(json_encode([
             'page'    => $page,
@@ -29,7 +29,7 @@ class ContactService
         array $filters,
     ): LengthAwarePaginator {
 
-        $perPage = config('per_page', 5);
+        $perPage = config('app.per_page', 5);
         $page = request()->get('page', 1);
 
         $cacheKey = 'searched_contacts:' . md5(json_encode([
