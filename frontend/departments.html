@@ -73,22 +73,23 @@
             <h3>Departments Management</h3>
             <button class="btn btn-success" onclick="openAddModal()">+ Add Department</button>
         </div>
-        
-        <!-- Search -->
+
+        <!-- Search Form -->
         <div class="card mb-4">
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="input-group">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Name</label>
                             <input type="text" class="form-control" id="searchName" placeholder="Search by name...">
-                            <button class="btn btn-primary" onclick="searchDepartments()">Search</button>
-                            <button class="btn btn-secondary" onclick="clearSearch()">Clear</button>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button onclick="searchDepartments()" class="btn btn-primary me-2">Search</button>
+                            <button type="button" class="btn btn-secondary" onclick="clearSearch()">Clear</button>
                         </div>
                     </div>
-                </div>
             </div>
         </div>
-        
+    
         <!-- Departments Table -->
         <div class="card">
             <div class="card-body">
