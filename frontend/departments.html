@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Departments - Mini CRM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Custom pagination styles */
+        .pagination {
+            gap: 4px;
+        }
+        .pagination .page-link {
+            border-radius: 6px;
+            padding: 8px 14px;
+            color: #495057;
+            border: 1px solid #dee2e6;
+            transition: all 0.2s ease;
+        }
+        .pagination .page-link:hover {
+            background-color: #e9ecef;
+            border-color: #dee2e6;
+            color: #0d6efd;
+        }
+        .pagination .page-item.active .page-link {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            color: #fff;
+            font-weight: 500;
+        }
+        .pagination .page-item.disabled .page-link {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+            color: #adb5bd;
+            cursor: not-allowed;
+        }
+        .pagination-info {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">Mini CRM</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Search</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="contacts.html">Contacts</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="departments.html">Departments</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <span class="text-white me-3" id="userName"></span>
+                    <button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>Departments Management</h3>
+            <button class="btn btn-success" onclick="openAddModal()">+ Add Department</button>
+        </div>
+        
+        <!-- Search -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="searchName" placeholder="Search by name...">
+                            <button class="btn btn-primary" onclick="searchDepartments()">Search</button>
+                            <button class="btn btn-secondary" onclick="clearSearch()">Clear</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Departments Table -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Contacts Count</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="departmentsBody">
+                            <tr><td colspan="4" class="text-center">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="paginationContainer" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal fade" id="departmentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Add Department</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="departmentForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="departmentId">
+                        <div class="mb-3">
+                            <label class="form-label">Department Name *</label>
+                            <input type="text" class="form-control" id="departmentName" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="saveBtn">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete this department?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        if (!requireAuth()) throw new Error('Not authenticated');
+        
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        document.getElementById('userName').textContent = user.name || 'Admin';
+        
+        let currentPage = 1;
+        let lastPage = 1;
+        let paginationMeta = null;
+        let deleteDepartmentId = null;
+        
+        const departmentModal = new bootstrap.Modal(document.getElementById('departmentModal'));
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        
+        function extractValue(val) {
+            return Array.isArray(val) ? val[0] : val;
+        }
+        
+        // Load departments
+        async function loadDepartments(page = 1, search = '') {
+            const tbody = document.getElementById('departmentsBody');
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center"><div class="spinner-border spinner-border-sm"></div> Loading...</td></tr>';
+            
+            let url = `/departments?page=${page}`;
+            if (search) {
+                url += `&name=${encodeURIComponent(search)}`;
+            }
+            
+            try {
+                const response = await apiRequest(url);
+                const data = await response.json();
+                
+                // Extract values handling array format
+                const meta = data.meta || {};
+                currentPage = extractValue(meta.current_page) || 1;
+                lastPage = extractValue(meta.last_page) || 1;
+                paginationMeta = {
+                    from: extractValue(meta.from),
+                    to: extractValue(meta.to),
+                    total: extractValue(meta.total),
+                    per_page: extractValue(meta.per_page),
+                    has_more_pages: meta.has_more_pages,
+                    links: meta.links || []
+                };
+                
+                renderDepartments(data.data || []);
+                renderPagination();
+            } catch (error) {
+                console.error('Error loading departments:', error);
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading departments</td></tr>';
+            }
+        }
+        
+        function renderDepartments(departments) {
+            const tbody = document.getElementById('departmentsBody');
+            
+            if (departments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No departments found</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = departments.map(dept => `
+                <tr>
+                    <td>${escapeHtml(dept.name)}</td>
+                    <td><span class="badge bg-secondary">${dept.contacts_count || 0}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditModal(${dept.id}, '${escapeHtml(dept.name)}')">Edit</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="openDeleteModal(${dept.id})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function renderPagination() {
+            const container = document.getElementById('paginationContainer');
+            
+            if (!paginationMeta || lastPage <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            const search = document.getElementById('searchName').value.trim();
+            const { from, to, total, links } = paginationMeta;
+            
+            let html = '<div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">';
+            
+            // Pagination info
+            if (from && to && total) {
+                html += `<div class="pagination-info">
+                    Showing <strong>${from}</strong> to <strong>${to}</strong> of <strong>${total}</strong> departments
+                </div>`;
+            }
+            
+            // Pagination links
+            if (links && links.length > 0) {
+                html += '<nav aria-label="Departments pagination"><ul class="pagination mb-0">';
+                
+                links.forEach(link => {
+                    const isDisabled = link.url === null;
+                    const isActive = link.active;
+                    const page = link.page;
+                    
+                    // Decode HTML entities in label
+                    const label = decodeHtmlEntities(link.label);
+                    
+                    let itemClass = 'page-item';
+                    if (isDisabled) itemClass += ' disabled';
+                    if (isActive) itemClass += ' active';
+                    
+                    if (isDisabled) {
+                        html += `<li class="${itemClass}">
+                            <span class="page-link">${label}</span>
+                        </li>`;
+                    } else {
+                        html += `<li class="${itemClass}">
+                            <a class="page-link" href="#" onclick="loadDepartments(${page}, '${search}'); return false;"${isActive ? ' aria-current="page"' : ''}>${label}</a>
+                        </li>`;
+                    }
+                });
+                
+                html += '</ul></nav>';
+            }
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        // Helper to decode HTML entities
+        function decodeHtmlEntities(text) {
+            const textArea = document.createElement('textarea');
+            textArea.innerHTML = text;
+            return textArea.value;
+        }
+        
+        // Search departments
+        function searchDepartments() {
+            const search = document.getElementById('searchName').value.trim();
+            loadDepartments(1, search);
+        }
+        
+        // Clear search
+        function clearSearch() {
+            document.getElementById('searchName').value = '';
+            loadDepartments(1);
+        }
+        
+        // Open add modal
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = 'Add Department';
+            document.getElementById('departmentId').value = '';
+            document.getElementById('departmentForm').reset();
+            departmentModal.show();
+        }
+        
+        // Open edit modal
+        function openEditModal(id, name) {
+            document.getElementById('modalTitle').textContent = 'Edit Department';
+            document.getElementById('departmentId').value = id;
+            document.getElementById('departmentName').value = name;
+            departmentModal.show();
+        }
+        
+        // Open delete modal
+        function openDeleteModal(id) {
+            deleteDepartmentId = id;
+            deleteModal.show();
+        }
+        
+        // Save department
+        document.getElementById('departmentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+            
+            const id = document.getElementById('departmentId').value;
+            const isEdit = !!id;
+            
+            const departmentData = {
+                name: document.getElementById('departmentName').value
+            };
+            
+            try {
+                const response = await apiRequest(
+                    isEdit ? `/departments/${id}` : '/departments',
+                    {
+                        method: isEdit ? 'PUT' : 'POST',
+                        body: JSON.stringify(departmentData)
+                    }
+                );
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showAlert(data.message || 'Department saved successfully');
+                    departmentModal.hide();
+                    loadDepartments(currentPage, document.getElementById('searchName').value.trim());
+                } else {
+                    const errors = data.errors ? Object.values(data.errors).flat().join('<br>') : data.message;
+                    showAlert(errors || 'Error saving department', 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving department:', error);
+                showAlert('Error saving department', 'danger');
+            }
+            
+            btn.disabled = false;
+            btn.innerHTML = 'Save';
+        });
+        
+        // Confirm delete
+        document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+            if (!deleteDepartmentId) return;
+            
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            
+            try {
+                const response = await apiRequest(`/departments/${deleteDepartmentId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showAlert('Department deleted successfully');
+                    deleteModal.hide();
+                    loadDepartments(currentPage, document.getElementById('searchName').value.trim());
+                } else {
+                    showAlert(data.message || 'Error deleting department', 'danger');
+                }
+            } catch (error) {
+                console.error('Error deleting department:', error);
+                showAlert('Error deleting department', 'danger');
+            }
+            
+            this.disabled = false;
+            this.innerHTML = 'Delete';
+            deleteDepartmentId = null;
+        });
+        
+        // Search on enter
+        document.getElementById('searchName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchDepartments();
+            }
+        });
+        
+        // Initialize
+        loadDepartments();
+    </script>
+</body>
+</html>
