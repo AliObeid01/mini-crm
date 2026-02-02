@@ -81,7 +81,7 @@
                         </div>
                         <div class="col-md-3 d-flex align-items-end">
                             <button onclick="searchDepartments()" class="btn btn-primary me-2">Search</button>
-                            <button type="button" class="btn btn-secondary" onclick="clearSearch()">Clear</button>
+                            <button type="button" class="btn btn-secondary" onclick="clearSearch()">Reset</button>
                         </div>
                     </div>
             </div>
@@ -313,7 +313,7 @@
             if (paginationMeta.has_more_pages) {
                 container.innerHTML = `
                     <div class="text-center">
-                        <button class="btn btn-outline-primary" onclick="loadMore()">
+                        <button class="btn btn-outline-primary" id="loadMoreBtn" onclick="loadMore()">
                             Load More (${to} of ${total})
                         </button>
                     </div>
@@ -329,6 +329,8 @@
 
         function loadMore() {
             const search = document.getElementById('searchName').value.trim();
+            const btn = document.getElementById('loadMoreBtn');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Loading more...';
             loadDepartments(currentPage + 1, search, true);
         }
         

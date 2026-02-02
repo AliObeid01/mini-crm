@@ -57,7 +57,7 @@
                         </div>
                         <div class="col-md-3 d-flex align-items-end">
                             <button type="button" class="btn btn-primary me-2" onclick="searchContacts()">Search</button>
-                            <button type="button" class="btn btn-secondary" onclick="clearSearch()">Clear</button>
+                            <button type="button" class="btn btn-secondary" onclick="clearSearch()">Reset</button>
                         </div>
                     </div>
             </div>
@@ -218,7 +218,7 @@
         // Load contacts
         async function loadContacts(page = 1 , filters, append = false) {
             const tbody = document.getElementById('contactsBody');
-            
+
             if (!append) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner-border spinner-border-sm"></div> Loading...</td></tr>';
                 LoadedContacts = [];
@@ -371,7 +371,7 @@
             if (paginationMeta.has_more_pages) {
                 container.innerHTML = `
                     <div class="text-center">
-                        <button class="btn btn-outline-primary" onclick="loadMore()">
+                        <button class="btn btn-outline-primary" id="loadMoreBtn" onclick="loadMore()">
                             Load More (${to} of ${total})
                         </button>
                     </div>
@@ -395,6 +395,9 @@
             if (name) params.append('name', name);
             if (phone) params.append('phone', phone);
             if (department) params.append('department_id', department);
+
+            const btn = document.getElementById('loadMoreBtn');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Loading more...';
 
             loadContacts(currentPage + 1, params, true);
         }
@@ -426,7 +429,7 @@
             document.getElementById('searchName').value = '';
             document.getElementById('searchPhone').value = '';
             document.getElementById('searchDepartment').value = '';
-            loadDepartments(1);
+            loadContacts(1);
         }
         
         // Open add modal
