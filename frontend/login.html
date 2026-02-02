@@ -76,7 +76,7 @@
                     localStorage.setItem('token', data.data.token);
                     localStorage.setItem('user', JSON.stringify(data.data.user));
                     
-                    window.location.href = 'index.html';
+                    window.location.href = 'contacts.html';
                 } else {
                     const errorMsg = data.message || 'Login failed';
                     alertBox.innerHTML = `<div class="alert alert-danger">${errorMsg}</div>`;

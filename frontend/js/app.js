@@ -26,7 +26,7 @@ function requireAuth() {
 
 function redirectIfAuthenticated() {
     if (isAuthenticated()) {
-        window.location.href = 'index.html';
+        window.location.href = 'contacts.html';
     }
 }
 
@@ -96,11 +96,6 @@ function showLoading(container) {
             </div>
         </div>
     `;
-}
-
-function formatDate(dateStr) {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString();
 }
 
 function escapeHtml(text) {
