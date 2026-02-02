@@ -13,16 +13,16 @@ class ContactService
 
         $perPage = config('app.per_page', 5);
         $page = request()->get('page', 1);
-        $cacheKey = 'all_contacts:' . md5(json_encode([
-            'page'    => $page,
-            'perPage' => $perPage,
-        ]));
-        return Cache::remember($cacheKey, 300, function () use ($perPage) {
+        // $this->cacheKey = 'all_contacts:' . md5(json_encode([
+        //     'page'    => $page,
+        //     'perPage' => $perPage,
+        // ]));
+        // return Cache::remember($this->cacheKey, 300, function () use ($perPage) {
             return Contact::query()
                 ->with('departments')
                 ->orderBy('first_name', 'asc')
                 ->paginate($perPage);
-            });
+            // });
     }
 
     public function searchContacts(
@@ -32,14 +32,14 @@ class ContactService
         $perPage = config('app.per_page', 5);
         $page = request()->get('page', 1);
 
-        $cacheKey = 'searched_contacts:' . md5(json_encode([
-            'filters' => $filters,
-            'page'    => $page,
-            'perPage' => $perPage,
-        ]));
-        return Cache::remember($cacheKey, 300, function () use ($filters, $perPage) {
+        // $this->cacheKey = 'searched_contacts:' . md5(json_encode([
+        //     'filters' => $filters,
+        //     'page'    => $page,
+        //     'perPage' => $perPage,
+        // ]));
+        // return Cache::remember($this->cacheKey, 300, function () use ($filters, $perPage) {
             return $this->applySearch($filters, $perPage);
-        });
+        // });
     }
 
     /**
@@ -66,7 +66,7 @@ class ContactService
                 $contact->departments()->sync($departmentIds);
             }
 
-            $this->clearContactCache();
+            // $this->clearContactCache();
 
             return $contact->load('departments');
         });
@@ -84,7 +84,7 @@ class ContactService
                 $contact->departments()->sync($departmentIds);
             }
 
-            $this->clearContactCache();
+            // $this->clearContactCache();
 
             return $contact->fresh('departments');
         });
@@ -94,7 +94,7 @@ class ContactService
     {
         $contact->departments()->detach();
         $result = $contact->delete();
-        $this->clearContactCache();
+        // $this->clearContactCache();
         
         return $result;
     }
@@ -122,15 +122,15 @@ class ContactService
             }
         });
 
-        $this->clearContactCache();
+        // $this->clearContactCache();
 
         return $imported;
     }
 
-    public function clearContactCache(): void
-    {
-        Cache::forget('all_contacts');
-        Cache::forget('searched_contacts');
-    }
+    // public function clearContactCache(): void
+    // {
+    //     Cache::forget('all_contacts:');
+    //     Cache::forget('searched_contacts:');
+    // }
 
 }
