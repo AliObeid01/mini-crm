@@ -17,9 +17,6 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="index.html">Search</a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link active" href="contacts.html">Contacts</a>
                     </li>
                     <li class="nav-item">
@@ -170,6 +167,7 @@
         let currentPage = 1;
         let lastPage = 1;
         let paginationMeta = null;
+        let paginationType= null;
         let deleteDepartmentId = null;
         
         const contactModal = new bootstrap.Modal(document.getElementById('contactModal'));
@@ -218,10 +216,14 @@
         }
         
         // Load contacts
-        async function loadContacts(page = 1 , filters) {
+        async function loadContacts(page = 1 , filters, append = false) {
             const tbody = document.getElementById('contactsBody');
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner-border spinner-border-sm"></div> Loading...</td></tr>';
             
+            if (!append) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner-border spinner-border-sm"></div> Loading...</td></tr>';
+                LoadedContacts = [];
+            }
+
             let url = `/contacts?page=${page}`;
             
             if(filters) {
@@ -235,6 +237,7 @@
                 // Extract values handling array format
                 const meta = data.meta || {};
                 currentPage = extractValue(meta.current_page) || 1;
+                paginationType= meta.pagination_type || 'pagination';
                 lastPage = extractValue(meta.last_page) || 1;
                 paginationMeta = {
                     from: extractValue(meta.from),
@@ -244,8 +247,14 @@
                     has_more_pages: meta.has_more_pages,
                     links: meta.links || []
                 };
+
+                if (append) {
+                    LoadedContacts = [...LoadedContacts, ...(data.data || [])];
+                } else {
+                    LoadedContacts = data.data || [];
+                }
                 
-                renderContacts(data.data || []);
+                renderContacts(LoadedContacts);
                 renderPagination();
             } catch (error) {
                 console.error('Error loading contacts:', error);
@@ -289,7 +298,17 @@
                 container.innerHTML = '';
                 return;
             }
-            
+
+            // Check pagination type from response
+            if (paginationType === 'load_more') {
+                renderLoadMore();
+            } else {
+                renderStandardPagination();
+            }
+        }
+
+        function renderStandardPagination() {
+            const container = document.getElementById('paginationContainer');   
             const params = new URLSearchParams();
 
             const name = document.getElementById('searchName').value.trim();
@@ -343,6 +362,41 @@
             
             html += '</div>';
             container.innerHTML = html;
+        }
+
+        function renderLoadMore() {
+            const container = document.getElementById('paginationContainer');
+            const { from, to, total, links } = paginationMeta;
+
+            if (paginationMeta.has_more_pages) {
+                container.innerHTML = `
+                    <div class="text-center">
+                        <button class="btn btn-outline-primary" onclick="loadMore()">
+                            Load More (${to} of ${total})
+                        </button>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="text-center text-muted">
+                        All ${total} contacts loaded
+                    </div>
+                `;
+            }
+        }
+
+        function loadMore() {
+            const params = new URLSearchParams();
+            
+            const name = document.getElementById('searchName').value.trim();
+            const phone = document.getElementById('searchPhone').value.trim();
+            const department = document.getElementById('searchDepartment').value;
+
+            if (name) params.append('name', name);
+            if (phone) params.append('phone', phone);
+            if (department) params.append('department_id', department);
+
+            loadContacts(currentPage + 1, params, true);
         }
 
         // Helper to decode HTML entities
