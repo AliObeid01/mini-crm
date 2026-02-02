@@ -50,8 +50,9 @@ class ContactSeeder extends Seeder
         ];
 
         $imported = 0;
+        $updated = 0;
 
-        DB::transaction(function () use ($handle, $headers, $headerMap, &$imported) {
+        DB::transaction(function () use ($handle, $headers, $headerMap, &$imported, &$updated) {
             while (($row = fgetcsv($handle)) !== false) {
                 $data = array_combine($headers, $row);
                 
@@ -71,15 +72,22 @@ class ContactSeeder extends Seeder
                     }
                 }
 
-                Contact::create($contactData);
-
-                $imported++;
+                // Check if contact exists (assuming phone_number is unique identifier)
+                $existingContact = Contact::where('phone_number', $contactData['phone_number'])->first();
+                
+                if ($existingContact) {
+                    $existingContact->update($contactData);
+                    $updated++;
+                } else {
+                    Contact::create($contactData);
+                    $imported++;
+                }
             }
         });
 
         fclose($handle);
 
-        $this->command->info("Imported {$imported} contacts from CSV!");
+        $this->command->info("Imported {$imported} new contacts and updated {$updated} existing contacts from CSV!");
     }
 
 }
