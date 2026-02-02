@@ -51,9 +51,6 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="index.html">Search</a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link" href="contacts.html">Contacts</a>
                     </li>
                     <li class="nav-item">
@@ -167,6 +164,7 @@
         let currentPage = 1;
         let lastPage = 1;
         let paginationMeta = null;
+        let paginationType= null;
         let deleteDepartmentId = null;
         
         const departmentModal = new bootstrap.Modal(document.getElementById('departmentModal'));
@@ -177,21 +175,26 @@
         }
         
         // Load departments
-        async function loadDepartments(page = 1, search = '') {
+        async function loadDepartments(page = 1, search = '', append = false) {
             const tbody = document.getElementById('departmentsBody');
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center"><div class="spinner-border spinner-border-sm"></div> Loading...</td></tr>';
             
+            if (!append) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center"><div class="spinner-border spinner-border-sm"></div> Loading...</td></tr>';
+                LoadedDepartments = [];
+            }
+
             let url = `/departments?page=${page}`;
             if (search) {
                 url += `&name=${encodeURIComponent(search)}`;
             }
-            
+
             try {
                 const response = await apiRequest(url);
                 const data = await response.json();
                 
                 // Extract values handling array format
                 const meta = data.meta || {};
+                paginationType= meta.pagination_type || 'pagination';
                 currentPage = extractValue(meta.current_page) || 1;
                 lastPage = extractValue(meta.last_page) || 1;
                 paginationMeta = {
@@ -202,8 +205,14 @@
                     has_more_pages: meta.has_more_pages,
                     links: meta.links || []
                 };
+
+                if (append) {
+                    LoadedDepartments = [...LoadedDepartments, ...(data.data || [])];
+                } else {
+                    LoadedDepartments = data.data || [];
+                }
                 
-                renderDepartments(data.data || []);
+                renderDepartments(LoadedDepartments);
                 renderPagination();
             } catch (error) {
                 console.error('Error loading departments:', error);
@@ -230,7 +239,7 @@
                 </tr>
             `).join('');
         }
-        
+
         function renderPagination() {
             const container = document.getElementById('paginationContainer');
             
@@ -238,9 +247,21 @@
                 container.innerHTML = '';
                 return;
             }
+
+            // Check pagination type from response
+            if (paginationType === 'load_more') {
+                renderLoadMore();
+            } else {
+                renderStandardPagination();
+            }
             
-            const search = document.getElementById('searchName').value.trim();
-            const { from, to, total, links } = paginationMeta;
+        }
+
+        function renderStandardPagination() {
+
+           const container = document.getElementById('paginationContainer');
+           const search = document.getElementById('searchName').value.trim();
+           const { from, to, total, links } = paginationMeta;
             
             let html = '<div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">';
             
@@ -283,6 +304,32 @@
             
             html += '</div>';
             container.innerHTML = html;
+        }
+
+        function renderLoadMore() {
+            const container = document.getElementById('paginationContainer');
+            const { from, to, total, links } = paginationMeta;
+
+            if (paginationMeta.has_more_pages) {
+                container.innerHTML = `
+                    <div class="text-center">
+                        <button class="btn btn-outline-primary" onclick="loadMore()">
+                            Load More (${to} of ${total})
+                        </button>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="text-center text-muted">
+                        All ${total} departments loaded
+                    </div>
+                `;
+            }
+        }
+
+        function loadMore() {
+            const search = document.getElementById('searchName').value.trim();
+            loadDepartments(currentPage + 1, search, true);
         }
         
         // Helper to decode HTML entities
