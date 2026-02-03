@@ -23,7 +23,7 @@ class AuthController extends Controller
             ]);
         }
 
-        $user->tokens()->delete();
+        // $user->tokens()->delete();
 
         $abilities = ['*'];
 

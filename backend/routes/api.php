@@ -15,6 +15,7 @@ Route::prefix('auth')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
 
  Route::apiResource('departments', DepartmentController::class);
+ Route::post('import-contacts', [ContactController::class,'importContact']);
  Route::apiResource('contacts', ContactController::class);
  Route::post('logout', [AuthController::class, 'logout']);
 

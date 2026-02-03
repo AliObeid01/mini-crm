@@ -99,32 +99,40 @@ class ContactService
         return $result;
     }
 
-    public function importFromCsv(array $csvData, array $defaultDepartmentIds = []): int
+    public function importFromCsv(array $csvData): array
     {
         $imported = 0;
-
-        DB::transaction(function () use ($csvData, $defaultDepartmentIds, &$imported) {
+        $updated= 0;
+        DB::transaction(function () use ($csvData,&$imported,&$updated) {
             foreach ($csvData as $row) {
-                $contact = Contact::create([
-                    'first_name' => $row['first_name'] ?? $row['First name'] ?? '',
-                    'last_name' => $row['last_name'] ?? $row['Last Name'] ?? '',
-                    'phone_number' => $row['phone_number'] ?? $row['Phone Number'] ?? '',
-                    'birthdate' => $row['birthdate'] ?? $row['Birthdate'] ?? null,
-                    'city' => $row['city'] ?? $row['City'] ?? null,
-                    'is_active' => true,
-                ]);
-
-                if (!empty($defaultDepartmentIds)) {
-                    $contact->syncDepartments($defaultDepartmentIds);
+                $existingContact = Contact::where('phone_number', $row['Phone Number'])->first();
+                if ($existingContact) {
+                    $existingContact->update([
+                        'first_name' => $row['First name'] ?? '',
+                        'last_name' => $row['Last Name'] ?? '',
+                        'phone_number' => $row['Phone Number'] ?? '',
+                        'birthdate' => $row['Birthdate'] ?? null,
+                        'city' => $row['City'] ?? '',
+                    ]);
+                    $updated++;
+                }else{
+                    $contact = Contact::create([
+                        'first_name' => $row['First name'] ?? '',
+                        'last_name' => $row['Last Name'] ?? '',
+                        'phone_number' => $row['Phone Number'] ?? '',
+                        'birthdate' => $row['Birthdate'] ?? null,
+                        'city' => $row['City'] ?? '',
+                    ]);
+                    $imported++;
                 }
 
-                $imported++;
+                if (!empty($defaultDepartmentIds)) {
+                    $contact->departments()->sync($defaultDepartmentIds);
+                }
             }
         });
 
-        // $this->clearContactCache();
-
-        return $imported;
+        return ['imported'=>$imported,'updated'=>$updated];
     }
 
     // public function clearContactCache(): void

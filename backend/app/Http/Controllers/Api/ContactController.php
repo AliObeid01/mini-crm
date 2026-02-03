@@ -77,4 +77,38 @@ class ContactController extends Controller
         ]);
     }
 
+    public function importContact(Request $request): JsonResponse
+    {
+        $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt|max:10240',
+            'department_ids' => 'nullable|array',
+            'department_ids.*' => 'exists:departments,id',
+        ]);
+
+        try {
+            $file = $request->file('csv_file');
+            $csvData = array_map('str_getcsv', file($file->getRealPath()));
+            
+            $header = array_shift($csvData);
+            
+            $mappedData = array_map(function ($row) use ($header) {
+                return array_combine($header, $row);
+            }, $csvData);
+
+            $data = $this->contactService->importFromCsv($mappedData);
+
+            return response()->json([
+                'success' => true,
+                'message' => "{$data['imported']} contacts imported and {$data['updated']} updated successfully",
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to import contacts',
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
 }
