@@ -4,14 +4,6 @@ function getToken() {
     return localStorage.getItem('token');
 }
 
-function getPaginationType() {
-    return localStorage.getItem('pagination_type') || 'pagination';
-}
-
-function getPerPage() {
-    return parseInt(localStorage.getItem('per_page')) || 5;
-}
-
 function isAuthenticated() {
     return !!getToken();
 }

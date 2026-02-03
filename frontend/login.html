@@ -5,20 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Mini CRM</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-        }
-        .login-card {
-            max-width: 400px;
-            margin: auto;
-        }
-    </style>
+    <link href="css/styles.css" rel="stylesheet">
 </head>
-<body>
+<body class="login-body">
     <div class="container">
         <div class="login-card">
             <div class="card shadow">
@@ -47,47 +36,6 @@
     </div>
 
     <script src="js/app.js"></script>
-    <script>
-        redirectIfAuthenticated();
-
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const btn = document.getElementById('loginBtn');
-            const alertBox = document.getElementById('alertBox');
-            
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Logging in...';
-            alertBox.innerHTML = '';
-            
-            try {
-                const response = await apiRequest('/auth/login', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        email: document.getElementById('email').value,
-                        password: document.getElementById('password').value
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-
-                    localStorage.setItem('token', data.data.token);
-                    localStorage.setItem('user', JSON.stringify(data.data.user));
-                    
-                    window.location.href = 'index.html';
-                } else {
-                    const errorMsg = data.message || 'Login failed';
-                    alertBox.innerHTML = `<div class="alert alert-danger">${errorMsg}</div>`;
-                }
-            } catch (error) {
-                alertBox.innerHTML = '<div class="alert alert-danger">Connection error. Please try again.</div>';
-            }
-            
-            btn.disabled = false;
-            btn.innerHTML = 'Login';
-        });
-    </script>
+    <script src="js/login.js"></script>
 </body>
 </html>

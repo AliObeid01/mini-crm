@@ -1,0 +1,34 @@
+.login-body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+}
+.login-card {
+    max-width: 400px;
+    margin: auto;
+}
+.table-responsive{
+    max-height: calc(100vh - 350px); 
+    overflow-y: auto; 
+    position: relative;
+}
+.table th{
+    position: sticky; top: 0; 
+    background-color: white; 
+    z-index: 10;
+}
+.departmentsCheckboxes{
+    max-height: 200px; 
+    overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+    .table th, .table td {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.25rem;
+    }
+    .mobile-hide {
+        display: none;
+    }
+}

@@ -5,47 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contacts - Mini CRM</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
 </head>
-<style>
-    @media (max-width: 768px) {
-    .table th, .table td {
-        font-size: 0.75rem;
-        padding: 0.5rem 0.25rem;
-    }
-    .table th:nth-child(2), /* City */
-    .table td:nth-child(2),
-    .table th:nth-child(3), /* City */
-    .table td:nth-child(3),
-    .table th:nth-child(4), /* Birthdate */
-    .table td:nth-child(4) {
-        display: none;
-    }
-}
-</style>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="index.html">Mini CRM</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="index.html">Contacts</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="departments.html">Departments</a>
-                    </li>
-                </ul>
-                <div class="d-flex align-items-center">
-                    <span class="text-white me-3" id="userName"></span>
-                    <button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button>
-                </div>
-            </div>
-        </div>
-    </nav>
 
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -56,40 +18,40 @@
         <!-- Search Form -->
         <div class="card mb-4">
             <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label">Name</label>
-                            <input type="text" class="form-control" id="searchName" placeholder="Search by name...">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Phone</label>
-                            <input type="text" class="form-control" id="searchPhone" placeholder="Search by phone...">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Department</label>
-                            <select class="form-select" id="searchDepartment">
-                                <option value="">All Departments</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3 d-flex align-items-end">
-                            <button type="button" class="btn btn-primary me-2" onclick="searchContacts()">Search</button>
-                            <button type="button" class="btn btn-secondary" onclick="clearSearch()">Reset</button>
-                        </div>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" id="searchName" placeholder="Search by name...">
                     </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Phone</label>
+                        <input type="text" class="form-control" id="searchPhone" placeholder="Search by phone...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Department</label>
+                        <select class="form-select" id="searchDepartment">
+                            <option value="">All Departments</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="button" class="btn btn-primary me-2" onclick="searchContacts()">Search</button>
+                        <button type="button" class="btn btn-secondary" onclick="clearSearch()">Reset</button>
+                    </div>
+                </div>
             </div>
         </div>
         
         <!-- Contacts Table -->
         <div class="card">
             <div class="card-body">
-                <div class="table-responsive" style="max-height: calc(100vh - 350px); overflow-y: auto; position: relative;">
+                <div class="table-responsive">
                     <table class="table table-hover">
-                        <thead style="position: sticky; top: 0; background-color: white; z-index: 10;">
+                        <thead class="contact-table-header">
                             <tr>
                                 <th>Name</th>
-                                <th>Phone</th>
-                                <th>City</th>
-                                <th>Birthdate</th>
+                                <th class="mobile-hide">Phone</th>
+                                <th class="mobile-hide">City</th>
+                                <th class="mobile-hide">Birthdate</th>
                                 <th>Departments</th>
                                 <th>Actions</th>
                             </tr>
@@ -142,7 +104,7 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Departments</label>
-                                <div id="departmentsCheckboxes" class="border rounded p-2" style="max-height: 200px; overflow-y: auto;">
+                                <div id="departmentsCheckboxes" class="departmentsCheckboxes border rounded p-2">
                                     Loading...
                                 </div>
                             </div>
@@ -178,414 +140,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/app.js"></script>
-    <script>
-        // Check authentication
-        if (!requireAuth()) throw new Error('Not authenticated');
-        
-        // Display user name
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
-        document.getElementById('userName').textContent = user.name || 'Admin';
-        
-        let currentPage = 1;
-        let lastPage = 1;
-        let paginationMeta = null;
-        let paginationType= null;
-        let deleteDepartmentId = null;
-        
-        const contactModal = new bootstrap.Modal(document.getElementById('contactModal'));
-        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-
-        function extractValue(val) {
-            return Array.isArray(val) ? val[0] : val;
-        }
-
-        // Load departments
-        async function loadDepartments() {
-            try {
-                const response = await apiRequest('/departments?all=true');
-                const data = await response.json();
-                const select = document.getElementById('searchDepartment');
-                if (data.success && data.data) {
-                    departments = data.data || [];
-                    departments.forEach(dept => {
-                        const option = document.createElement('option');
-                        option.value = dept.id;
-                        option.textContent = dept.name;
-                        select.appendChild(option);
-                    });
-                    renderDepartmentCheckboxes();
-                }
-            } catch (error) {
-                console.error('Error loading departments:', error);
-            }
-        }
-        
-        // Render department checkboxes
-        function renderDepartmentCheckboxes(selectedIds = []) {
-            const container = document.getElementById('departmentsCheckboxes');
-            if (departments.length === 0) {
-                container.innerHTML = '<small class="text-muted">No departments available</small>';
-                return;
-            }
-            
-            container.innerHTML = departments.map(dept => `
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="${dept.id}" 
-                           id="dept_${dept.id}" ${selectedIds.includes(dept.id) ? 'checked' : ''}>
-                    <label class="form-check-label" for="dept_${dept.id}">${escapeHtml(dept.name)}</label>
-                </div>
-            `).join('');
-        }
-        
-        // Load contacts
-        async function loadContacts(page = 1 , filters, append = false) {
-            const tbody = document.getElementById('contactsBody');
-
-            if (!append) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner-border spinner-border-sm"></div> Loading...</td></tr>';
-                LoadedContacts = [];
-            }
-
-            let url = `/contacts?page=${page}`;
-            
-            if(filters) {
-              url += `&${filters.toString()}`;
-            }
-
-            try {
-                const response = await apiRequest(url);
-                const data = await response.json();
-                
-                // Extract values handling array format
-                const meta = data.meta || {};
-                currentPage = extractValue(meta.current_page) || 1;
-                paginationType= meta.pagination_type || 'pagination';
-                lastPage = extractValue(meta.last_page) || 1;
-                paginationMeta = {
-                    from: extractValue(meta.from),
-                    to: extractValue(meta.to),
-                    total: extractValue(meta.total),
-                    per_page: extractValue(meta.per_page),
-                    has_more_pages: meta.has_more_pages,
-                    links: meta.links || []
-                };
-
-                if (append) {
-                    LoadedContacts = [...LoadedContacts, ...(data.data || [])];
-                } else {
-                    LoadedContacts = data.data || [];
-                }
-                
-                renderContacts(LoadedContacts);
-                renderPagination();
-            } catch (error) {
-                console.error('Error loading contacts:', error);
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading contacts</td></tr>';
-            }
-        }
-        
-        // Render contacts table
-        function renderContacts(contacts) {
-            const tbody = document.getElementById('contactsBody');
-            
-            if (contacts.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No contacts found</td></tr>';
-                return;
-            }
-            
-            tbody.innerHTML = contacts.map(contact => `
-                <tr>
-                    <td>${escapeHtml(contact.first_name)} ${escapeHtml(contact.last_name)}</td>
-                    <td>${escapeHtml(contact.phone_number)}</td>
-                    <td>${escapeHtml(contact.city) || '-'}</td>
-                    <td>${escapeHtml(contact.birthdate)}</td>
-                    <td>
-                        ${contact.departments?.map(d => 
-                            `<span class="badge bg-info me-1">${escapeHtml(d.name)}</span>`
-                        ).join('') || '-'}
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditModal(${contact.id})">Edit</button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="openDeleteModal(${contact.id})">Delete</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-        
-        // Render pagination
-        function renderPagination() {
-            const container = document.getElementById('paginationContainer');
-            
-            if (!paginationMeta || lastPage <= 1) {
-                container.innerHTML = '';
-                return;
-            }
-
-            // Check pagination type from response
-            if (paginationType === 'load_more') {
-                renderLoadMore();
-            } else {
-                renderStandardPagination();
-            }
-        }
-
-        function renderStandardPagination() {
-            const container = document.getElementById('paginationContainer');   
-            const params = new URLSearchParams();
-
-            const name = document.getElementById('searchName').value.trim();
-            const phone = document.getElementById('searchPhone').value.trim();
-            const department = document.getElementById('searchDepartment').value;
-
-            if (name) params.append('name', name);
-            if (phone) params.append('phone', phone);
-            if (department) params.append('department_id', department);
-
-            const { from, to, total, links } = paginationMeta;
-            
-            let html = '<div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">';
-            
-            // Pagination info
-            if (from && to && total) {
-                html += `<div class="pagination-info">
-                    Showing <strong>${from}</strong> to <strong>${to}</strong> of <strong>${total}</strong> departments
-                </div>`;
-            }
-            
-            // Pagination links
-            if (links && links.length > 0) {
-                html += '<nav aria-label="Departments pagination"><ul class="pagination mb-0">';
-                
-                links.forEach(link => {
-                    const isDisabled = link.url === null;
-                    const isActive = link.active;
-                    const page = link.page;
-                    
-                    // Decode HTML entities in label
-                    const label = decodeHtmlEntities(link.label);
-                    
-                    let itemClass = 'page-item';
-                    if (isDisabled) itemClass += ' disabled';
-                    if (isActive) itemClass += ' active';
-                    
-                    if (isDisabled) {
-                        html += `<li class="${itemClass}">
-                            <span class="page-link">${label}</span>
-                        </li>`;
-                    } else {
-                        html += `<li class="${itemClass}">
-                            <a class="page-link" href="#" onclick="loadContacts(${page}, '${params}'); return false;"${isActive ? ' aria-current="page"' : ''}>${label}</a>
-                        </li>`;
-                    }
-                });
-                
-                html += '</ul></nav>';
-            }
-            
-            html += '</div>';
-            container.innerHTML = html;
-        }
-
-        function renderLoadMore() {
-            const container = document.getElementById('paginationContainer');
-            const { from, to, total, links } = paginationMeta;
-
-            if (paginationMeta.has_more_pages) {
-                container.innerHTML = `
-                    <div class="text-center">
-                        <button class="btn btn-outline-primary" id="loadMoreBtn" onclick="loadMore()">
-                            Load More (${to} of ${total})
-                        </button>
-                    </div>
-                `;
-            } else {
-                container.innerHTML = `
-                    <div class="text-center text-muted">
-                        All ${total} contacts loaded
-                    </div>
-                `;
-            }
-        }
-
-        function loadMore() {
-            const params = new URLSearchParams();
-            
-            const name = document.getElementById('searchName').value.trim();
-            const phone = document.getElementById('searchPhone').value.trim();
-            const department = document.getElementById('searchDepartment').value;
-
-            if (name) params.append('name', name);
-            if (phone) params.append('phone', phone);
-            if (department) params.append('department_id', department);
-
-            const btn = document.getElementById('loadMoreBtn');
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Loading more...';
-
-            loadContacts(currentPage + 1, params, true);
-        }
-
-        // Helper to decode HTML entities
-        function decodeHtmlEntities(text) {
-            const textArea = document.createElement('textarea');
-            textArea.innerHTML = text;
-            return textArea.value;
-        }
-        
-        // Search contacts
-        function searchContacts() {
-            const params = new URLSearchParams();
-            
-            const name = document.getElementById('searchName').value.trim();
-            const phone = document.getElementById('searchPhone').value.trim();
-            const department = document.getElementById('searchDepartment').value;
-
-            if (name) params.append('name', name);
-            if (phone) params.append('phone', phone);
-            if (department) params.append('department_id', department);
-            
-            loadContacts(1, params);
-        }
-
-        // Clear search
-        function clearSearch() {
-            document.getElementById('searchName').value = '';
-            document.getElementById('searchPhone').value = '';
-            document.getElementById('searchDepartment').value = '';
-            loadContacts(1);
-        }
-        
-        // Open add modal
-        function openAddModal() {
-            document.getElementById('modalTitle').textContent = 'Add Contact';
-            document.getElementById('contactId').value = '';
-            document.getElementById('contactForm').reset();
-            renderDepartmentCheckboxes([]);
-            contactModal.show();
-        }
-        
-        // Open edit modal
-        async function openEditModal(id) {
-            document.getElementById('modalTitle').textContent = 'Edit Contact';
-            document.getElementById('contactForm').reset();
-            
-            try {
-                const response = await apiRequest(`/contacts/${id}`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    const contact = data.data;
-                    document.getElementById('contactId').value = contact.id;
-                    document.getElementById('firstName').value = contact.first_name;
-                    document.getElementById('lastName').value = contact.last_name;
-                    document.getElementById('phoneNumber').value = contact.phone_number;
-                    document.getElementById('city').value = contact.city || '';
-                    document.getElementById('birthdate').value = contact.birthdate || '';
-                    
-                    const selectedIds = contact.departments?.map(d => d.id) || [];
-                    renderDepartmentCheckboxes(selectedIds);
-                    
-                    contactModal.show();
-                }
-            } catch (error) {
-                console.error('Error loading contact:', error);
-                showAlert('Error loading contact', 'danger');
-            }
-        }
-        
-        // Open delete modal
-        function openDeleteModal(id) {
-            deleteContactId = id;
-            deleteModal.show();
-        }
-        
-        // Save contact
-        document.getElementById('contactForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const btn = document.getElementById('saveBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
-            
-            const id = document.getElementById('contactId').value;
-            const isEdit = !!id;
-            
-            // Get selected departments
-            const departmentIds = [];
-            document.querySelectorAll('#departmentsCheckboxes input:checked').forEach(cb => {
-                departmentIds.push(parseInt(cb.value));
-            });
-            
-            const contactData = {
-                first_name: document.getElementById('firstName').value,
-                last_name: document.getElementById('lastName').value,
-                phone_number: document.getElementById('phoneNumber').value,
-                city: document.getElementById('city').value || null,
-                birthdate: document.getElementById('birthdate').value || null,
-                department_ids: departmentIds
-            };
-            
-            try {
-                const response = await apiRequest(
-                    isEdit ? `/contacts/${id}` : '/contacts',
-                    {
-                        method: isEdit ? 'PUT' : 'POST',
-                        body: JSON.stringify(contactData)
-                    }
-                );
-                
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-                    showAlert(data.message || 'Contact saved successfully');
-                    contactModal.hide();
-                    loadContacts(currentPage);
-                } else {
-                    const errors = data.errors ? Object.values(data.errors).flat().join('<br>') : data.message;
-                    showAlert(errors || 'Error saving contact', 'danger');
-                }
-            } catch (error) {
-                console.error('Error saving contact:', error);
-                showAlert('Error saving contact', 'danger');
-            }
-            
-            btn.disabled = false;
-            btn.innerHTML = 'Save';
-        });
-        
-        // Confirm delete
-        document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
-            if (!deleteContactId) return;
-            
-            this.disabled = true;
-            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-            
-            try {
-                const response = await apiRequest(`/contacts/${deleteContactId}`, {
-                    method: 'DELETE'
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-                    showAlert('Contact deleted successfully');
-                    deleteModal.hide();
-                    loadContacts(currentPage);
-                } else {
-                    showAlert(data.message || 'Error deleting contact', 'danger');
-                }
-            } catch (error) {
-                console.error('Error deleting contact:', error);
-                showAlert('Error deleting contact', 'danger');
-            }
-            
-            this.disabled = false;
-            this.innerHTML = 'Delete';
-            deleteContactId = null;
-        });
-        
-        // Initialize
-        loadDepartments();
-        loadContacts();
-    </script>
+    <script src="js/navbar.js"></script>
+    <script src="js/contacts.js"></script>
 </body>
 </html>
