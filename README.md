@@ -65,6 +65,7 @@ php artisan serve
 ```
 
 API will be available at `http://localhost:8000/api`
+
 Postman collection under `./backend/postman_collection.json`
 
 
