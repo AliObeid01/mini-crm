@@ -43,16 +43,20 @@ function logout() {
 
 async function apiRequest(endpoint, options = {}) {
     const token = getToken();
+    const isFormData = options.body instanceof FormData;
     const headers = {
         'Accept': 'application/json',
-        'Content-Type': 'application/json',
         ...options.headers
     };
     
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
-    
+
+    if (!isFormData) {
+        headers['Content-Type'] = 'application/json';
+    }
+
     const response = await fetch(`${API_BASE}${endpoint}`, {
         ...options,
         headers

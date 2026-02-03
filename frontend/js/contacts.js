@@ -12,6 +12,12 @@ let LoadedContacts = [];
 const contactModal = new bootstrap.Modal(document.getElementById('contactModal'));
 const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
 
+document.getElementById('csvFileInput').addEventListener('change', function(e) {
+    if (e.target.files.length > 0) {
+        importContacts(e.target.files[0]);
+    }
+});
+
 function extractValue(val) {
     return Array.isArray(val) ? val[0] : val;
 }
@@ -258,6 +264,34 @@ function clearSearch() {
     document.getElementById('searchPhone').value = '';
     document.getElementById('searchDepartment').value = '';
     loadContacts(1);
+}
+
+async function importContacts(file) {
+    let url = '/import-contacts';
+    
+    const formData = new FormData();
+    formData.append('csv_file', file);
+    
+    try {
+        const response = await apiRequest(url, {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            showAlert(data.message);
+            loadContacts(1);
+            document.getElementById('csvFileInput').value = '';
+        } else {
+            const errors = data.errors ? Object.values(data.errors).flat().join('<br>') : data.message;
+            showAlert(errors);
+        }
+    } catch (error) {
+        console.error('Import error:', error);
+        showAlert('Error importing contacts: ' + error.message);
+    }
 }
 
 function openAddModal() {
